@@ -27,7 +27,7 @@ jobs:
       - run: npm run release:guard
       - run: npm run test:fast          # typecheck, build, memory + unit + installer tests, notices audit (no browser)
       - run: npm run package:release    # fails if the memory artifact is missing
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
         with:
           name: release-${{ github.sha }}

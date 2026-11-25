@@ -1,7 +1,8 @@
 // Lightning scheduler (CPU side, tiny). It only decides WHEN a discharge strikes and WHICH precomputed channel carries it; the bolts themselves are
 // drawn on the GPU from a few per-strike numbers and a clock uniform (bolts.ts). Nothing is rebuilt per frame.
 //  - LINK strikes ride a channel that exists in graph.edges (one oriented link bolt per real edge); the target note may discharge on in turn
-//    (seeded cascade through the real graph). Hovering/selecting a note biases strikes toward its own links.
+//    (seeded cascade through the real graph). Hovering/selecting a note biases strikes toward its own links. A spontaneous link strike takes the
+//    admissible real link farthest from the recent strikes out of a few random candidates (same best-candidate rule as ambient).
 //  - AMBIENT strikes are decorative and stratified: bins (hemisphere x lobe, cerebellum, brainstem) are dealt from a shuffled deck whose card counts
 //    follow cortical area (flattened), so every lobe of both hemispheres flashes in every cycle; within the bin the admissible channel farthest from
 //    the recent strikes wins (Mitchell's best candidate). The flashes wander over the whole cerebrum instead of clustering where the notes are.
@@ -113,13 +114,19 @@ export class LightningSim {
     if (p.type === Req.Kick) pool = this.inc[p.neuron] ?? [];
     else if (p.type === Req.Cascade) { if (t - this.last[p.neuron] < this.rates.refractory * 0.45) return [-1, -1]; pool = this.out[p.neuron] ?? []; }
     else if (this.focus >= 0 && this.focus < this.nNeurons && this.inc[this.focus].length && this.r() < 0.6) pool = this.inc[this.focus]; // bias toward the hovered note's real links
-    for (let tries = 0; tries < 8; tries++) {
+    // spontaneous seeds (no pool) take the best of up to 3 admissible real links: the one farthest from the recent strikes (Mitchell's best
+    // candidate, as for ambient), so link flashes do not pile up where the notes are densest. Kicks, cascades and the focus bias stay causal.
+    const found: number[] = [];
+    for (let tries = 0; tries < 8 && found.length < (pool.length ? 1 : 3); tries++) {
       let i: number;
       if (pool.length) i = this.pick(pool);
       else { if (!this.seedable.length) return [-1, -1]; const n = this.pick(this.seedable); if (t - this.last[n] < this.rates.refractory * 0.45) continue; i = this.pick(this.out[n]); }
-      if (this.okLink(i, t)) return [KIND_LINK, i];
+      if (!found.includes(i) && this.okLink(i, t)) found.push(i);
     }
-    return [-1, -1];
+    if (!found.length) return [-1, -1];
+    let best = found[0], bd = -1;
+    if (found.length > 1) for (const i of found) { const c = this.links[i].center; let d = 1e9; if (c) for (const q of this.recent) d = Math.min(d, Math.hypot(c[0] - q[0], c[1] - q[1], c[2] - q[2])); d += 0.02 * this.r(); if (d > bd) { bd = d; best = i; } }
+    return [KIND_LINK, best];
   }
   private params(kind: number, bolt: number, t: number): Strike {
     const r = this.r, big = kind === KIND_LINK ? this.links[bolt].big : this.ambient[bolt].big, seed = r();

@@ -1,0 +1,31 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Tag must match package version
+        run: test "${GITHUB_REF_NAME}" = "v$(node -p "require('./package.json').version")"
+      - run: npm run release:guard
+      - run: npm run test:fast
+      - run: npm run package:release
+      - run: node scripts/audit-distribution.mjs --sources . --strict
+      - name: Publish release files (skipped if a maintainer already published this tag)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; leaving its audited files untouched."
+            exit 0
+          fi
+          gh release create "$GITHUB_REF_NAME" release/* --title "Palace Atlas $GITHUB_REF_NAME" --generate-notes

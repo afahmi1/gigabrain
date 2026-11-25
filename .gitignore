@@ -1,0 +1,22 @@
+# dependencies and build output (all reproducible: npm ci && npm run build)
+node_modules/
+dist-demo/
+memory/dist/
+release/
+/main.js
+*.tsbuildinfo
+# never commit user data or secrets
+data.json
+diag.json
+.env
+.env.*
+*.pem
+*.key
+# local noise
+*.log
+*.zip
+.DS_Store
+.vscode/
+.idea/
+.claude/
+coverage/

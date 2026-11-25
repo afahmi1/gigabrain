@@ -1,0 +1,51 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    name: node ${{ matrix.node }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run release:guard
+      - run: npm run test:fast          # typecheck, build, memory + unit + installer tests, notices audit (no browser)
+      - run: npm run package:release    # fails if the memory artifact is missing
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 24
+        with:
+          name: release-${{ github.sha }}
+          path: release/
+          if-no-files-found: error
+  browser:
+    # Real-browser render checks under software WebGL. Pixel baselines were recorded on macOS, so only the functional browser suite runs here.
+    name: browser suite (ubuntu, chrome)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:browser
+        env:
+          CHROME: /usr/bin/google-chrome

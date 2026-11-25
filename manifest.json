@@ -1,0 +1,9 @@
+{
+  "id": "palace-atlas",
+  "name": "Palace Atlas",
+  "version": "0.4.0",
+  "minAppVersion": "1.4.0",
+  "description": "Read-only 3D brain/universe view of your notes and their links. Procedural illustration, not anatomical.",
+  "author": "Palace Atlas contributors",
+  "isDesktopOnly": true
+}

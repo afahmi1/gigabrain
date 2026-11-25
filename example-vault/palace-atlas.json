@@ -1,0 +1,5 @@
+{
+  "folders": ["topics", "projects", "memories"],
+  "inbox": "memories",
+  "exclude": ["private", "secret", "confidential", "password", "credential"]
+}

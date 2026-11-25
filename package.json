@@ -1,0 +1,63 @@
+{
+  "name": "palace-atlas",
+  "version": "0.4.0",
+  "description": "Palace Atlas: a model-neutral AI second brain. Plain markdown memory (MCP stdio server + CLI) and a 3D Obsidian brain view of the same notes and links.",
+  "license": "MIT",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20.3"
+  },
+  "bin": {
+    "palace-memory": "memory/dist/palace-memory.cjs"
+  },
+  "scripts": {
+    "assets:brain": "node scripts/build-brain.mjs && npm run assets:sdf",
+    "assets:cerebellum": "node scripts/build-cerebellum.mjs && npm run assets:sdf",
+    "assets:morphologies": "node scripts/build-morphologies.mjs",
+    "assets:sdf": "esbuild scripts/build-sdf.ts --bundle --platform=node --format=cjs --outfile=dist-demo/build-sdf.cjs --log-level=warning && node dist-demo/build-sdf.cjs",
+    "typecheck": "tsc -p . && tsc -p memory",
+    "build": "node build.mjs",
+    "build:memory": "node memory/build.mjs",
+    "install-plugin": "node scripts/install-plugin.mjs",
+    "package": "node scripts/package-release.mjs",
+    "package:release": "node scripts/package-release.mjs --require-memory",
+    "demo": "npm run build && node scripts/serve-demo.mjs dist-demo 4173",
+    "notices": "node scripts/build-notices.mjs",
+    "release:guard": "node scripts/release-guard.mjs",
+    "test:adapter": "node dist-demo/adapter.test.cjs",
+    "test:contain": "node dist-demo/contain.test.cjs",
+    "test:cerebellum": "node test/cerebellum.test.mjs",
+    "test:assets": "node test/assets.test.mjs",
+    "test:pixels": "node test/pixels.test.mjs",
+    "test:installer": "node test/install-plugin.test.mjs",
+    "test:browser": "node test/browser.test.mjs",
+    "test:memory": "node --test memory/test/",
+    "test:fast": "npm run typecheck && npm run build && npm run build:memory && npm run test:memory && npm run test:adapter && npm run test:assets && npm run test:cerebellum && npm run test:contain && npm run notices:check && npm run test:installer && npm run test:release",
+    "test": "node scripts/release-guard.mjs && npm run typecheck && npm run build && npm run build:memory && npm run test:memory && npm run test:adapter && npm run test:assets && npm run test:cerebellum && npm run test:contain && npm run test:browser && npm run test:pixels -- --full && npm run notices:check && npm run test:installer && npm run test:release",
+    "notices:check": "node scripts/build-notices.mjs --check",
+    "test:release": "node scripts/package-release.mjs --no-build --require-memory && node test/release.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
+    "zod": "^4.2.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "obsidian": "^1.14.4",
+    "playwright-core": "^1.65.1",
+    "three": "^0.187.0",
+    "three-mesh-bvh": "^0.9.18",
+    "typescript": "^7.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/afahmi1/palace-atlas.git"
+  },
+  "homepage": "https://github.com/afahmi1/palace-atlas#readme",
+  "bugs": {
+    "url": "https://github.com/afahmi1/palace-atlas/issues"
+  }
+}
